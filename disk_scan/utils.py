@@ -235,6 +235,8 @@ def find_duplicates(nodes: Set[Path], ignore_stem: List[str] =None, ignore_suffi
         ...
     }
     '''
+    _ignore_stem = [str(x).lower() for x in ignore_stem]
+    _ignore_suffix = [str(x).lower() for x in ignore_suffix]
     # Firstly, create a map:
     # size : [path, path, path]
     big = {}
@@ -242,9 +244,9 @@ def find_duplicates(nodes: Set[Path], ignore_stem: List[str] =None, ignore_suffi
         skip_me = False
         if node.is_dir():
             skip_me = True
-        if ignore_stem and node.stem in ignore_stem:
+        if ignore_stem and node.stem.lower() in _ignore_stem:
             skip_me = True
-        if ignore_suffix and node.suffix in ignore_suffix:
+        if ignore_suffix and node.suffix.lower() in _ignore_suffix:
             skip_me = True
 
         if skip_me:
