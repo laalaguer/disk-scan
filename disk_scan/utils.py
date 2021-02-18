@@ -3,7 +3,7 @@ Utils dealing with <Path>
 These functions are stateless
 '''
 
-from typing import Iterable, Set, Dict, List
+from typing import Iterable, Set, Dict, List, Callable
 from pathlib import Path
 import hashlib
 
@@ -151,25 +151,29 @@ def count_suffixes(nodes: Set[Path]) -> Dict:
     return output
 
 
-def scan(root: Path) -> Set[Path]:
+def scan(root: Path, call_back: Callable) -> None:
     '''
-    Scan from root, get all dirs and files
+    Scan from root, get all dirs and files.
+
+    When finished, call the 'call_back' with a set of paths.
+    When processing, yeild total number (int) of scanned files.
 
     Args:
-        root (Path): from which to scan
+        root (Path): from path start to scan
+        call_back (Callable): Accepts (Set[Path]) as only argument.
 
     Raises:
         Exception: If scanning path is not file nor dir.
-
-    Returns:
-        Set[Path]: A set of Paths.
     '''
+    total_sum = 0
     all_nodes = set()
     unresolved = []
     unresolved.append(root.resolve())
 
     while len(unresolved) :
         current = unresolved.pop(0)
+        total_sum += 1
+        yield total_sum
         # File? Mark it.
         if current.is_file():
             all_nodes.add(current)
@@ -184,7 +188,7 @@ def scan(root: Path) -> Set[Path]:
 
         raise Exception(f"{current} is not file, nor dir")
     
-    return all_nodes
+    call_back(all_nodes)
 
 
 def sort_nodes(nodes: Iterable[Path]) -> Iterable[Path]:
@@ -202,7 +206,7 @@ def sort_nodes(nodes: Iterable[Path]) -> Iterable[Path]:
     s = [len(str(node.stem)) for node in nodes]
     if not (min(s) == max(s)):
         return sorted(nodes, key=lambda node: len(str(node.stem)))  # stem short first.
-    
+
     return nodes
 
 
