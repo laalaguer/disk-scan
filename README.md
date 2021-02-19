@@ -3,9 +3,15 @@ A Python library to scan disks and clean it up.
 
 ## Install
 ```
-make install
+$ make install
 ```
 
+## For Developers
+```
+$ make developer
+
+$ source .env/bin/activate
+```
 ## Usage
 ```
 $ python3 disk.py
