@@ -90,7 +90,8 @@ def bigfiles(dir, size, json_):
             click.echo(each)
     else:
         with open(json_, 'w', encoding='utf8') as f:
-            r = {'paths': [str(x) for x in result]}
+            temp = sorted(list(result))
+            r = {'paths': [str(x) for x in temp]}
             json.dump(r, f, indent=2, ensure_ascii=False)
 
 
@@ -119,7 +120,8 @@ def suffix(dir, suffix, json_):
             click.echo(each)
     else:
         with open(json_, 'w', encoding='utf8') as f:
-            r = {'paths': [str(x) for x in result]}
+            temp = sorted(list(result))
+            r = {'paths': [str(x) for x in temp]}
             json.dump(r, f, indent=2, ensure_ascii=False)
 
 
