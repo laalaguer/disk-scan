@@ -83,13 +83,32 @@ def is_empty_dir(p: Path) -> bool:
     return not any(p.iterdir())
 
 
+def is_almost_empty_dir(p: Path) -> bool:
+    '''
+    If directory only contains os hidden files, then it is almost empty.
+    '''
+    if not p.is_dir():
+        raise Exception(f'{p} is not a directory')
+    
+    if is_empty_dir(p):
+        return True
+    
+    input = {x for x in p.iterdir()}
+    output = exclude_os_files(input)
+
+    return not (len(output) != 0)
+
+
 def exclude_os_files(nodes: Set[Path]) -> Set[Path]:
     ''' Filter out mac os files from the set '''
     return {x for x in nodes if not is_mac_os_file(x)}
 
 
 def filter_by_size(nodes: Set[Path], more_than:int=None, less_than:int=None) -> Set[Path]:
-    ''' Filter nodes with size requirement '''
+    ''' Filter nodes with size requirement
+         
+        more_than/less_than: how many bytes
+    '''
     if more_than == None and less_than == None:
         raise Exception("Need one of: more_than/less_than")
 
@@ -151,7 +170,7 @@ def count_suffixes(nodes: Set[Path]) -> Dict:
     return output
 
 
-def scan(root: Path, call_back: Callable) -> None:
+def scan(root: Path, call_back: Callable):
     '''
     Scan from root, get all dirs and files.
 
@@ -239,8 +258,14 @@ def find_duplicates(nodes: Set[Path], ignore_stem: List[str] =None, ignore_suffi
         ...
     }
     '''
-    _ignore_stem = [str(x).lower() for x in ignore_stem]
-    _ignore_suffix = [str(x).lower() for x in ignore_suffix]
+    _ignore_stem = None 
+    if ignore_stem:
+        _ignore_stem = [str(x).lower() for x in ignore_stem]
+    
+    _ignore_suffix = None
+    if ignore_suffix:
+        _ignore_suffix = [str(x).lower() for x in ignore_suffix]
+
     # Firstly, create a map:
     # size : [path, path, path]
     big = {}
@@ -271,7 +296,7 @@ def find_duplicates(nodes: Set[Path], ignore_stem: List[str] =None, ignore_suffi
     md5_big = {}
     for size, items in filtered_big.items():
         for node in items:
-            print(f'reading: {node}')
+            # print(f'reading: {node}')
             m = hashlib.md5()
             b = None
             if secure:
