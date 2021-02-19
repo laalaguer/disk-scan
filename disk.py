@@ -99,7 +99,8 @@ def bigfiles(dir, size, json_):
 @click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
 @click.option('-s', '--suffix', multiple=True, default=[], required=True, help="eg. mp4, png, jpg")
 @click.option('--json', 'json_', type=str, default=None, help='File name to save the result in json')
-def suffix(dir, suffix, json_):
+@click.option('--include-sys', is_flag=True, default=False, help='Include system files in scan.')
+def suffix(dir, suffix, json_, include_sys):
     '''
     Scan the DIR and filter out files with certain suffixes.
     
@@ -113,6 +114,8 @@ def suffix(dir, suffix, json_):
     p = Path(str(dir))
     cache = progress(p)
     nodes = cache.get()
+    if not include_sys:
+        nodes = utils.exclude_os_files(nodes)
 
     result = utils.filter_by_suffixes(nodes, _suffixes)
     if not json_:
@@ -146,10 +149,39 @@ def suffix(dir, suffix, json_):
 #     cache = progress(p)
 #     nodes = cache.get()
 
+@click.command()
+@click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
+@click.option('-n', '--name', multiple=True, default=[], required=True, help="eg. From Russia with Love")
+@click.option('--json', 'json_', type=str, default=None, help='File name to save the result in json')
+@click.option('--include-sys', is_flag=True, default=False, help='Include system files in scan.')
+def filtername(dir, name, json_, include_sys):
+    ''' Scan and find files with names in DIR '''
+    _names = [str(x).lower() for x in name if len(x.strip()) > 0]
+    if len(_names) == 0:
+        click.echo('The names provided cannot be white spaces!')
+        return
+    
+    p = Path(str(dir))
+    cache = progress(p)
+    nodes = cache.get()
+    if not include_sys:
+        nodes = utils.exclude_os_files(nodes)
+
+    result = utils.filter_by_name(nodes, _names)
+    if not json_:
+        for each in result:
+            click.echo(each)
+    else:
+        with open(json_, 'w', encoding='utf8') as f:
+            temp = sorted(list(result))
+            r = {'paths': [str(x) for x in temp]}
+            json.dump(r, f, indent=2, ensure_ascii=False)
+
 
 cli.add_command(bigfiles)
 cli.add_command(duplicate)
 cli.add_command(suffix)
+cli.add_command(filtername)
 # cli.add_command(rename)
 # cli.add_command(cleanempty)
 

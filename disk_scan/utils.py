@@ -146,6 +146,35 @@ def filter_by_suffixes(nodes: Set[Path], include: List[str]=None, exclude: List[
         return {x for x in nodes if (not x.is_dir() and (x.suffix.lower() not in _exclude))}
 
 
+def filter_by_name(nodes: Set[Path], include: List[str]=None, exclude: List[str]=None) -> Set[Path]:
+    ''' Filter nodes, include some with partial name matching '''
+    _include = []
+    if include:
+        _include = [str(x).lower() for x in include]
+    
+    _exclude = []
+    if exclude:
+        _exclude = [str(x).lower() for x in exclude]
+    
+    output = set()
+    for x in nodes:
+        should_add = False
+        _x = str(x.stem).lower()
+        for each in _include:
+            if each in _x:
+                should_add = True
+                break
+        
+        for each in _exclude:
+            if each in _x:
+                should_add = False
+                break
+        if should_add:
+            output.add(x)
+    
+    return output
+
+
 def count_suffixes(nodes: Set[Path]) -> Dict:
     '''
     Go through the nodes, count the suffixes and their frequencies.
