@@ -6,6 +6,7 @@ These functions are stateless
 from typing import Iterable, Set, Dict, List, Callable
 from pathlib import Path
 import hashlib
+import os
 
 
 def is_mac_os_file(p: Path) -> bool:
@@ -306,8 +307,12 @@ def find_duplicates(nodes: Set[Path], call_back: Callable, ignore_stem: List[str
                 b = node.read_bytes()
             else:
                 with open(node, 'rb') as f:
-                    if node.stat().st_size > 50 * (1024 ** 2):
-                        b = f.read(30 * (1024 ** 2))
+                    if node.stat().st_size > 60 * 1024 * 1024:  # Read first and last 30MB from file.
+                        # Read first 30 MB
+                        b = f.read(30 * 1024 * 1024)
+                        # Jump to end 30 MB and read
+                        f.seek(-30 * 1024 * 1024, os.SEEK_END)
+                        b += f.read()
                     else:
                         b = node.read_bytes()
             m.update(b)
