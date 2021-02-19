@@ -8,24 +8,37 @@ make install
 
 ## Usage
 ```
-$ python3 disk.py --help
+$ python3 disk.py
 Usage: disk.py [OPTIONS] COMMAND [ARGS]...
 
 Commands:
   bigfiles    Find big files in DIR
-  cleanempty  Scan the DIR, clean up empty directories.
   duplicate   Find duplicated files in DIR
   suffix      Scan the DIR and filter out files with certain suffixes.
 ```
 
 ## Examples
 
-**Find duplicate files**
-```
-python3 disk.py duplicate ~/Downloads --json=result.json
+**Find duplicated files**
+```bash
+# Scan and print to screen
+python3 disk.py duplicate ~/Downloads
+# Scan and print to file
+python3 disk.py duplicate ~/Downloads --json=output.json
 ```
 
 **Find large files > 100MB**
+```bash
+# Scan and print to screen
+python3 disk.py bigfiles ~/Downloads --size=100
+# Scan and print to file
+python3 disk.py bigfiles ~/Downloads --json=output.json
 ```
-python3 disk.py bigfiles ~/Downloads --json=result.json
+
+**Find files by suffix jpg or png**
+```bash
+# Scan and print to screen
+python3 disk.py suffix ~/Downloads -s jpeg -s png
+# Scan and print to file
+python3 disk.py suffix ~/Downloads --json=output.json
 ```

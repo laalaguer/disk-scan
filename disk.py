@@ -80,7 +80,36 @@ def bigfiles(dir, size, json_):
             click.echo(each)
     else:
         with open(json_, 'w') as f:
-            r = {'files': [str(x) for x in result]}
+            r = {'paths': [str(x) for x in result]}
+            json.dump(r, f, indent=2)
+
+
+@click.command()
+@click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
+@click.option('-s', '--suffix', multiple=True, default=[], required=True, help="eg. mp4, png, jpg")
+@click.option('--json', 'json_', type=str, default=None, help='File name to save the result in json')
+def suffix(dir, suffix, json_):
+    '''
+    Scan the DIR and filter out files with certain suffixes.
+    
+    You can supply multiple suffixes with multiple '-s' switch.
+    '''
+    _suffixes = ['.'+str(x).lower() for x in suffix if len(x.strip()) > 0]
+    if len(_suffixes) == 0:
+        click.echo('The suffixes provided cannot be white spaces!')
+        return
+
+    p = Path(str(dir))
+    cache = progress(p)
+    nodes = cache.get()
+
+    result = utils.filter_by_suffixes(nodes, _suffixes)
+    if not json_:
+        for each in result:
+            click.echo(each)
+    else:
+        with open(json_, 'w') as f:
+            r = {'paths': [str(x) for x in result]}
             json.dump(r, f, indent=2)
 
 
@@ -94,34 +123,23 @@ def bigfiles(dir, size, json_):
 #     click.echo(f'{dryrun}')
 
 
-@click.command()
-@click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
-@click.option('-s', '--suffix', multiple=True, default=[], required=True, help="eg. mp4 or .mp4")
-@click.option('--json', 'json_', type=str, default=None, help='File name to save the result in json')
-def suffix(dir, suffix, json_):
-    '''
-    Scan the DIR and filter out files with certain suffixes.
-    
-    You can supply multiple suffixes with multiple '-s' switch.
-    '''
-    click.echo(suffix)
-
-
-@click.command()
-@click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
-@click.option('--dryrun', is_flag=True, help='No actions, a dry run.')
-def cleanempty(dir, dryrun):
-    '''
-    Scan the DIR, clean up empty directories.
-    '''
-    pass
+# @click.command()
+# @click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
+# @click.option('--dryrun', is_flag=True, help='No actions, a dry run.')
+# def cleanempty(dir, dryrun):
+#     '''
+#     Scan the DIR, clean up empty directories.
+#     '''
+#     p = Path(str(dir))
+#     cache = progress(p)
+#     nodes = cache.get()
 
 
 cli.add_command(bigfiles)
 cli.add_command(duplicate)
-# cli.add_command(rename)
 cli.add_command(suffix)
-cli.add_command(cleanempty)
+# cli.add_command(rename)
+# cli.add_command(cleanempty)
 
 
 if __name__ == '__main__':
