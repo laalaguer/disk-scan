@@ -40,5 +40,5 @@ python3 disk.py bigfiles ~/Downloads --json=output.json
 # Scan and print to screen
 python3 disk.py suffix ~/Downloads -s jpeg -s png
 # Scan and print to file
-python3 disk.py suffix ~/Downloads --json=output.json
+python3 disk.py suffix ~/Downloads -s mp4 --json=output.json
 ```
