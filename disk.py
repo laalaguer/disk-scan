@@ -13,7 +13,7 @@ class Cache:
     def get(self):
         return self.a
 
-    def populate(self, a: Set[Path]):
+    def populate(self, a):
         self.a = a
 
 
@@ -22,9 +22,18 @@ def progress(p: Path, show_progress=True) -> Cache:
     for counter in utils.scan(p, cache.populate):
         if show_progress:
             print(f'\rSearching: {str(p)} {counter}', end='')
-        else:
-            pass
     print()
+    return cache
+
+
+def d_progress(nodes: Set[Path], show_progress=True) -> Cache:
+    cache = Cache()
+    for current in utils.find_duplicates(nodes, cache.populate):
+        if show_progress:
+            show = str(current)
+            show = show if len(show) < 79 else show[:75] + '...'
+            print(f'\rReading: {show}', end='')
+    print('')
     return cache
 
 
@@ -47,7 +56,8 @@ def duplicate(dir, json_, include_sys):
     if not include_sys:
         nodes = utils.exclude_os_files(nodes)
     
-    result = utils.find_duplicates(nodes)
+    cache = d_progress(nodes)
+    result = cache.get()
 
     if not json_:
         for md5_hash, paths in result.items():

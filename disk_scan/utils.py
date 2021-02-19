@@ -243,16 +243,18 @@ def rename_str(p: Path, old: str, new: str, dry_run=True) -> None:
             p = p.rename(b)
 
 
-def find_duplicates(nodes: Set[Path], ignore_stem: List[str] =None, ignore_suffix: List[str]=None, secure=False) -> dict:
+def find_duplicates(nodes: Set[Path], call_back: Callable, ignore_stem: List[str]=None, ignore_suffix: List[str]=None, secure=False):
     '''
     Given a dict of nodes, find duplicated within it.
     Using MD5 hashing to determine if file are the same.
 
+    During the process, it will yield current reading path.
+
     Args:
+        call_back (Callable): Accepts (dict) as only argument.
         secure (bool): If secure, then md5 scan the whole file, otherwise only scan first 50MB.
 
-    Returns:
-
+    The call_back shall accept the only argument:
     {
         b'md5_hash': [Path, Path, ...],
         ...
@@ -296,7 +298,7 @@ def find_duplicates(nodes: Set[Path], ignore_stem: List[str] =None, ignore_suffi
     md5_big = {}
     for size, items in filtered_big.items():
         for node in items:
-            # print(f'reading: {node}')
+            yield f'r{node}'
             m = hashlib.md5()
             b = None
             if secure:
@@ -318,4 +320,4 @@ def find_duplicates(nodes: Set[Path], ignore_stem: List[str] =None, ignore_suffi
     # We trun only that md5 is duplicated.
     r_md5_big = {key: value for key, value in md5_big.items() if len(value) > 1}
 
-    return r_md5_big
+    call_back(r_md5_big)
