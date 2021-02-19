@@ -204,8 +204,9 @@ def scan(root: Path, call_back: Callable):
             for x in current.iterdir():
                 unresolved.append(x)
             continue
-
-        raise Exception(f"{current} is not file, nor dir")
+        
+        continue
+        # raise Exception(f"{current} is not file, nor dir")
     
     call_back(all_nodes)
 
