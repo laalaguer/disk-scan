@@ -8,20 +8,22 @@ $ make install
 
 ## For Developers
 ```
-$ make developer
-
+$ make develop
 $ source .env/bin/activate
 ```
+
 ## Usage
 ```
-$ python3 disk.py
+$ ./disk.py
 Usage: disk.py [OPTIONS] COMMAND [ARGS]...
 
 Commands:
-  bigfiles    Find big files in DIR
-  duplicate   Find duplicated files in DIR
-  filtername  Scan and find files with names in DIR
-  suffix      Scan the DIR and filter out files with certain suffixes.
+  bigfile    Find big files.
+  byname     Find files with names.
+  bysuffix   Filter out files with suffixes.
+  duplicate  Find duplicated files.
+  emptydir   Find empty directories.
+  renamedir  Replace old name with new name, can be a partial replace.
 ```
 
 ## Examples
@@ -29,31 +31,41 @@ Commands:
 **Find duplicated files**
 ```bash
 # Scan and print to screen
-python3 disk.py duplicate ~/Downloads
+./disk.py duplicate ~/Downloads
 # Scan and print to file
-python3 disk.py duplicate ~/Downloads --json=output.json
+./disk.py duplicate ~/Downloads --json=output.json
 ```
 
 **Find large files > 100MB**
 ```bash
 # Scan and print to screen
-python3 disk.py bigfiles ~/Downloads --size=100
+./disk.py bigfile ~/Downloads --size=100
 # Scan and print to file
-python3 disk.py bigfiles ~/Downloads --json=output.json
+./disk.py bigfile ~/Downloads --json=output.json
 ```
 
 **Find files by suffix jpg or png**
 ```bash
 # Scan and print to screen
-python3 disk.py suffix ~/Downloads -s jpeg -s png
+./disk.py bysuffix ~/Downloads -s jpeg -s png
 # Scan and print to file
-python3 disk.py suffix ~/Downloads -s mp4 --json=output.json
+./disk.py bysuffix ~/Downloads -s mp4 --json=output.json
 ```
 
 **Find files by name**
 ```bash
 # Scan and print to screen
-python3 disk.py suffix ~/Downloads -n sunshine -n apple
+./disk.py byname ~/Downloads -n sunshine -n apple
 # Scan and print to file
-python3 disk.py suffix ~/Downloads -n juice --json=output.json
+./disk.py byname ~/Downloads -n juice --json=output.json
+```
+
+**Find empty directories**
+```bash
+./disk.py emptydir ~/Downloads
+```
+
+**Rename directory**
+```bash
+./disk.py renamedir ~/Downloads --old ninja --new gundam
 ```

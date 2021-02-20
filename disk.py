@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 ''' Command line interface to disk scan '''
 from typing import Set
 from pathlib import Path
@@ -21,7 +22,7 @@ def progress(p: Path, show_progress=True) -> Cache:
     cache = Cache()
     for counter in utils.scan(p, cache.populate):
         if show_progress:
-            print(f'\rSearching: {str(p)} {counter}', end='')
+            print(f'\rScan: {str(p)} {counter}', end='')
     print()
     return cache
 
@@ -48,7 +49,7 @@ def cli():
 @click.option('--include-sys', is_flag=True, default=False, help='Include system files in scan.')
 def duplicate(dir, json_, include_sys):
     '''
-    Find duplicated files in DIR
+    Find duplicated files.
     '''
     p = Path(str(dir))
     cache = progress(p)
@@ -75,9 +76,9 @@ def duplicate(dir, json_, include_sys):
 @click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
 @click.option('-s', '--size', type=int, required=True, prompt="Bigger than () MB?", help='Filter bigger than ? MB.')
 @click.option('--json', 'json_', type=str, default=None, help='File name to save the result in json')
-def bigfiles(dir, size, json_):
+def bigfile(dir, size, json_):
     '''
-    Find big files in DIR
+    Find big files.
     '''
     click.echo(f'> {size} mb.')
     p = Path(str(dir))
@@ -100,9 +101,9 @@ def bigfiles(dir, size, json_):
 @click.option('-s', '--suffix', multiple=True, default=[], required=True, help="eg. mp4, png, jpg")
 @click.option('--json', 'json_', type=str, default=None, help='File name to save the result in json')
 @click.option('--include-sys', is_flag=True, default=False, help='Include system files in scan.')
-def suffix(dir, suffix, json_, include_sys):
+def bysuffix(dir, suffix, json_, include_sys):
     '''
-    Scan the DIR and filter out files with certain suffixes.
+    Filter out files with suffixes.
     
     You can supply multiple suffixes with multiple '-s' switch.
     '''
@@ -128,34 +129,91 @@ def suffix(dir, suffix, json_, include_sys):
             json.dump(r, f, indent=2, ensure_ascii=False)
 
 
-# @click.command()
-# @click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
-# @click.option('--dryrun', is_flag=True, help='No actions, a dry run.')
-# def rename(dir, dryrun):
-#     '''
-#     Replace old name with new name in a DIR, can be a partial replace
-#     '''
-#     click.echo(f'{dryrun}')
+@click.command()
+@click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
+@click.option('--force', is_flag=True, help='Perform real actions. (NOT dry run)')
+@click.option('--old', 'old_', type=str, default=None, help='Old name')
+@click.option('--new', 'new_', type=str, default=None, help='New name')
+@click.option('--json', 'json_', type=str, default=None, help='File name to save the result in json')
+def renamedir(dir, force, old_, new_, json_):
+    '''
+    Replace old name with new name, can be a partial replace.
+
+    Note: This is recursive.
+    '''
+    p = Path(str(dir))
+    cache = progress(p)
+    nodes = cache.get()
+
+    # Get dirs
+    dirs = utils.filter_dir(nodes)
+    # Get wanted dirs
+    dirs = {x for x in dirs if utils.has_str(x, old_)}
+
+    if not json_:
+        click.echo('-' * 32)
+        for each in dirs:
+            oldName, newName = utils.rename_str(each, old_, new_, True)
+            click.echo(f'old: {oldName}')
+            click.echo(f'new: {newName}')
+            click.echo('-' * 16)
+    else:
+        with open(json_, 'w', encoding='utf8') as f:
+            r = {'paths': []}
+            for each in dirs:
+                oldName, newName = utils.rename_str(each, old_, new_, True)
+                r['paths'].append({
+                    'old': str(oldName),
+                    'new': str(newName)
+                })
+            json.dump(r, f, indent=2, ensure_ascii=False)
+    
+    if force:
+        for each in dirs:
+            utils.rename_str(each, old_, new_, False)
+    else:
+        click.echo("Warning: This is a dry run, use --force to perform real rename action.")
 
 
-# @click.command()
-# @click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
-# @click.option('--dryrun', is_flag=True, help='No actions, a dry run.')
-# def cleanempty(dir, dryrun):
-#     '''
-#     Scan the DIR, clean up empty directories.
-#     '''
-#     p = Path(str(dir))
-#     cache = progress(p)
-#     nodes = cache.get()
+@click.command()
+@click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
+@click.option('--include-sys', is_flag=True, default=False, help='Hidden system files are considered in scan.')
+@click.option('--json', 'json_', type=str, default=None, help='File name to save the result in json')
+def emptydir(dir, include_sys, json_):
+    '''
+    Find empty directories.
+    '''
+    p = Path(str(dir))
+    cache = progress(p)
+    nodes = cache.get()
+    # Get dirs
+    dirs = utils.filter_dir(nodes)
+
+    output = set()
+    if include_sys:
+        output = {x for x in dirs if utils.is_empty_dir(x)}
+    else:
+        output = {x for x in dirs if utils.is_almost_empty_dir(x)}
+    
+    
+    if not json_:
+        click.echo('-' * 32)
+        for each in output:
+            click.echo(each)
+    else:
+        with open(json_, 'w', encoding='utf8') as f:
+            temp = sorted(list(output))
+            r = {'paths': [str(x) for x in temp]}
+            json.dump(r, f, indent=2, ensure_ascii=False)
+
 
 @click.command()
 @click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
 @click.option('-n', '--name', multiple=True, default=[], required=True, help="eg. From Russia with Love")
 @click.option('--json', 'json_', type=str, default=None, help='File name to save the result in json')
 @click.option('--include-sys', is_flag=True, default=False, help='Include system files in scan.')
-def filtername(dir, name, json_, include_sys):
-    ''' Scan and find files with names in DIR '''
+def byname(dir, name, json_, include_sys):
+    ''' Find files with names.'''
     _names = [str(x).lower() for x in name if len(x.strip()) > 0]
     if len(_names) == 0:
         click.echo('The names provided cannot be white spaces!')
@@ -178,12 +236,12 @@ def filtername(dir, name, json_, include_sys):
             json.dump(r, f, indent=2, ensure_ascii=False)
 
 
-cli.add_command(bigfiles)
+cli.add_command(bigfile)
 cli.add_command(duplicate)
-cli.add_command(suffix)
-cli.add_command(filtername)
-# cli.add_command(rename)
-# cli.add_command(cleanempty)
+cli.add_command(bysuffix)
+cli.add_command(byname)
+cli.add_command(renamedir)
+cli.add_command(emptydir)
 
 
 if __name__ == '__main__':

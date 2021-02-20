@@ -3,7 +3,7 @@ Utils dealing with <Path>
 These functions are stateless
 '''
 
-from typing import Iterable, Set, Dict, List, Callable
+from typing import Iterable, Set, Dict, List, Callable, Tuple
 from pathlib import Path
 import hashlib
 import os
@@ -260,18 +260,32 @@ def sort_nodes(nodes: Iterable[Path]) -> Iterable[Path]:
     return nodes
 
 
-def rename_str(p: Path, old: str, new: str, dry_run=True) -> None:
-    ''' Replace part of the name of the path. '''
+def rename_str(p: Path, old: str, new: str, dry_run=True) -> Tuple[str, str]:
+    '''
+    Replace part of the name of the path.
+
+    Return:
+        Tuple(old, new)
+    '''
     x = str(p)
     if old in x:
         y = x.replace(old, new)
         b = Path(y)
-        if dry_run:
-            print('Replace:')
-            print('Old:', x)
-            print('New:', y)
-        else:
+        if not dry_run:
             p = p.rename(b)
+        return (x, y)
+    return (None, None)
+
+
+def has_str(p: Path, old: str) -> bool:
+    ''' This is exact comparison! '''
+    x = str(p)
+    return old in x
+
+
+def filter_dir(nodes: Set[Path]):
+    ''' Filter nodes, get only directories '''
+    return {x for x in nodes if x.is_dir()}
 
 
 def find_duplicates(nodes: Set[Path], call_back: Callable, ignore_stem: List[str]=None, ignore_suffix: List[str]=None, secure=False):
