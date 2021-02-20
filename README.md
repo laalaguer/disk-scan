@@ -73,5 +73,5 @@ Commands:
 
 **Rename files**
 ```bash
-./disk.py renamefiles ~/Downloads --old ninja --new gundam
+./scan renamefiles ~/Downloads --old ninja --new gundam
 ```
