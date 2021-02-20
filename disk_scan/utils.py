@@ -283,9 +283,32 @@ def has_str(p: Path, old: str) -> bool:
     return old in x
 
 
+def stem_has_str(p: Path, old: str) -> bool:
+    return old in p.stem
+
+
+def rename_stem(p: Path, old: str, new: str, dry_run=True) -> Tuple[str, str]:
+    if not stem_has_str(p, old):
+        return None, None
+    
+    x = str(p)
+    newStem = p.stem.replace(old, new)
+    newPath = p.with_name(newStem.rstrip('/') + p.suffix.lstrip('/'))
+    y = str(newPath)
+    if not dry_run:
+        p.rename(newPath)
+    
+    return x, y
+
+
 def filter_dir(nodes: Set[Path]):
     ''' Filter nodes, get only directories '''
     return {x for x in nodes if x.is_dir()}
+
+
+def filter_file(nodes: Set[Path]):
+    ''' Filter nodes, get only files '''
+    return {x for x in nodes if x.is_file()}
 
 
 def find_duplicates(nodes: Set[Path], call_back: Callable, ignore_stem: List[str]=None, ignore_suffix: List[str]=None, secure=False):

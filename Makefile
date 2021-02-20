@@ -1,4 +1,4 @@
-export cmd=disk.py
+export cmd=scan
 
 # Create user environment.
 install:

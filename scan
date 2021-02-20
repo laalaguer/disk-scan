@@ -76,7 +76,7 @@ def duplicate(dir, json_, include_sys):
 @click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
 @click.option('-s', '--size', type=int, required=True, prompt="Bigger than () MB?", help='Filter bigger than ? MB.')
 @click.option('--json', 'json_', type=str, default=None, help='File name to save the result in json')
-def bigfile(dir, size, json_):
+def bigfiles(dir, size, json_):
     '''
     Find big files.
     '''
@@ -132,12 +132,12 @@ def bysuffix(dir, suffix, json_, include_sys):
 @click.command()
 @click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
 @click.option('--force', is_flag=True, help='Perform real actions. (NOT dry run)')
-@click.option('--old', 'old_', type=str, default=None, help='Old name')
-@click.option('--new', 'new_', type=str, default=None, help='New name')
+@click.option('--old', 'old_', required=True, type=str, default=None, help='Old name')
+@click.option('--new', 'new_', required=True, type=str, default=None, help='New name')
 @click.option('--json', 'json_', type=str, default=None, help='File name to save the result in json')
-def renamedir(dir, force, old_, new_, json_):
+def renamedirs(dir, force, old_, new_, json_):
     '''
-    Replace old name with new name, can be a partial replace.
+    Replace old string in dir name with new.
 
     Note: This is recursive.
     '''
@@ -148,12 +148,14 @@ def renamedir(dir, force, old_, new_, json_):
     # Get dirs
     dirs = utils.filter_dir(nodes)
     # Get wanted dirs
-    dirs = {x for x in dirs if utils.has_str(x, old_)}
+    dirs = {x for x in dirs if utils.stem_has_str(x, old_)}
+
+    dirs = sorted(dirs, key=lambda dir: len(str(dir)), reverse=True)
 
     if not json_:
         click.echo('-' * 32)
         for each in dirs:
-            oldName, newName = utils.rename_str(each, old_, new_, True)
+            oldName, newName = utils.rename_stem(each, old_, new_, True)
             click.echo(f'old: {oldName}')
             click.echo(f'new: {newName}')
             click.echo('-' * 16)
@@ -161,7 +163,7 @@ def renamedir(dir, force, old_, new_, json_):
         with open(json_, 'w', encoding='utf8') as f:
             r = {'paths': []}
             for each in dirs:
-                oldName, newName = utils.rename_str(each, old_, new_, True)
+                oldName, newName = utils.rename_stem(each, old_, new_, True)
                 r['paths'].append({
                     'old': str(oldName),
                     'new': str(newName)
@@ -170,16 +172,62 @@ def renamedir(dir, force, old_, new_, json_):
     
     if force:
         for each in dirs:
-            utils.rename_str(each, old_, new_, False)
+            utils.rename_stem(each, old_, new_, False)
     else:
-        click.echo("Warning: This is a dry run, use --force to perform real rename action.")
+        click.echo("Warning: This is a dry run, use --force to perform actual rename action.")
+
+
+@click.command()
+@click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
+@click.option('--force', is_flag=True, help='Perform real actions. (NOT dry run)')
+@click.option('--old', 'old_', required=True, type=str, default=None, help='Old name')
+@click.option('--new', 'new_', required=True, type=str, default=None, help='New name')
+@click.option('--json', 'json_', type=str, default=None, help='File name to save the result in json')
+def renamefiles(dir, force, old_, new_, json_):
+    '''
+    Replace old string in file names with new.
+
+    Note: This is recursive.
+    '''
+    p = Path(str(dir))
+    cache = progress(p)
+    nodes = cache.get()
+
+    # Get files
+    output = utils.filter_file(nodes)
+    # Get wanted files
+    output = {x for x in output if utils.stem_has_str(x, old_)}
+
+    if not json_:
+        click.echo('-' * 32)
+        for each in output:
+            oldName, newName = utils.rename_stem(each, old_, new_, True)
+            click.echo(f'old: {oldName}')
+            click.echo(f'new: {newName}')
+            click.echo('-' * 16)
+    else:
+        with open(json_, 'w', encoding='utf8') as f:
+            r = {'paths': []}
+            for each in output:
+                oldName, newName = utils.rename_stem(each, old_, new_, True)
+                r['paths'].append({
+                    'old': str(oldName),
+                    'new': str(newName)
+                })
+            json.dump(r, f, indent=2, ensure_ascii=False)
+    
+    if force:
+        for each in output:
+            utils.rename_stem(each, old_, new_, False)
+    else:
+        click.echo("Warning: This is a dry run, use --force to perform actual rename action.")
 
 
 @click.command()
 @click.argument('dir', type=click.Path(exists=True, dir_okay=True, resolve_path=True), required=True)
 @click.option('--include-sys', is_flag=True, default=False, help='Hidden system files are considered in scan.')
 @click.option('--json', 'json_', type=str, default=None, help='File name to save the result in json')
-def emptydir(dir, include_sys, json_):
+def emptydirs(dir, include_sys, json_):
     '''
     Find empty directories.
     '''
@@ -236,12 +284,13 @@ def byname(dir, name, json_, include_sys):
             json.dump(r, f, indent=2, ensure_ascii=False)
 
 
-cli.add_command(bigfile)
+cli.add_command(bigfiles)
 cli.add_command(duplicate)
 cli.add_command(bysuffix)
 cli.add_command(byname)
-cli.add_command(renamedir)
-cli.add_command(emptydir)
+cli.add_command(renamedirs)
+cli.add_command(renamefiles)
+cli.add_command(emptydirs)
 
 
 if __name__ == '__main__':
