@@ -86,12 +86,12 @@ def bigfiles(dir, size, json_):
     nodes = cache.get()
 
     result = utils.filter_by_size(nodes, more_than=size * (1024 * 1024))
+    temp = sorted(list(result))
     if not json_:
-        for each in result:
+        for each in temp:
             click.echo(each)
     else:
         with open(json_, 'w', encoding='utf8') as f:
-            temp = sorted(list(result))
             r = {'paths': [str(x) for x in temp]}
             json.dump(r, f, indent=2, ensure_ascii=False)
 
@@ -119,12 +119,12 @@ def bysuffix(dir, suffix, json_, include_sys):
         nodes = utils.exclude_os_files(nodes)
 
     result = utils.filter_by_suffixes(nodes, _suffixes)
+    temp = sorted(list(result), key=lambda p: len(str(p.parent)))
     if not json_:
-        for each in result:
+        for each in temp:
             click.echo(each)
     else:
         with open(json_, 'w', encoding='utf8') as f:
-            temp = sorted(list(result))
             r = {'paths': [str(x) for x in temp]}
             json.dump(r, f, indent=2, ensure_ascii=False)
 
@@ -148,14 +148,14 @@ def renamedirs(dir, force, old_, new_, json_):
     # Get dirs
     dirs = utils.filter_dir(nodes)
     # Get wanted dirs
-    dirs = {x for x in dirs if utils.stem_has_str(x, old_)}
+    dirs = {x for x in dirs if utils.name_has_str(x, old_)}
 
     dirs = sorted(dirs, key=lambda dir: len(str(dir)), reverse=True)
 
     if not json_:
         click.echo('-' * 32)
         for each in dirs:
-            oldName, newName = utils.rename_stem(each, old_, new_, True)
+            oldName, newName = utils.rename_name(each, old_, new_, True)
             click.echo(f'old: {oldName}')
             click.echo(f'new: {newName}')
             click.echo('-' * 16)
@@ -163,7 +163,7 @@ def renamedirs(dir, force, old_, new_, json_):
         with open(json_, 'w', encoding='utf8') as f:
             r = {'paths': []}
             for each in dirs:
-                oldName, newName = utils.rename_stem(each, old_, new_, True)
+                oldName, newName = utils.rename_name(each, old_, new_, True)
                 r['paths'].append({
                     'old': str(oldName),
                     'new': str(newName)
@@ -172,7 +172,7 @@ def renamedirs(dir, force, old_, new_, json_):
     
     if force:
         for each in dirs:
-            utils.rename_stem(each, old_, new_, False)
+            utils.rename_name(each, old_, new_, False)
     else:
         click.echo("Warning: This is a dry run, use --force to perform actual rename action.")
 
@@ -196,12 +196,12 @@ def renamefiles(dir, force, old_, new_, json_):
     # Get files
     output = utils.filter_file(nodes)
     # Get wanted files
-    output = {x for x in output if utils.stem_has_str(x, old_)}
+    output = {x for x in output if utils.name_has_str(x, old_)}
 
     if not json_:
         click.echo('-' * 32)
         for each in output:
-            oldName, newName = utils.rename_stem(each, old_, new_, True)
+            oldName, newName = utils.rename_name(each, old_, new_, True)
             click.echo(f'old: {oldName}')
             click.echo(f'new: {newName}')
             click.echo('-' * 16)
@@ -209,7 +209,7 @@ def renamefiles(dir, force, old_, new_, json_):
         with open(json_, 'w', encoding='utf8') as f:
             r = {'paths': []}
             for each in output:
-                oldName, newName = utils.rename_stem(each, old_, new_, True)
+                oldName, newName = utils.rename_name(each, old_, new_, True)
                 r['paths'].append({
                     'old': str(oldName),
                     'new': str(newName)
@@ -218,7 +218,7 @@ def renamefiles(dir, force, old_, new_, json_):
     
     if force:
         for each in output:
-            utils.rename_stem(each, old_, new_, False)
+            utils.rename_name(each, old_, new_, False)
     else:
         click.echo("Warning: This is a dry run, use --force to perform actual rename action.")
 
@@ -260,7 +260,8 @@ def emptydirs(dir, include_sys, json_):
 @click.option('-n', '--name', multiple=True, default=[], required=True, help="eg. From Russia with Love")
 @click.option('--json', 'json_', type=str, default=None, help='File name to save the result in json')
 @click.option('--include-sys', is_flag=True, default=False, help='Include system files in scan.')
-def byname(dir, name, json_, include_sys):
+@click.option('--only-dir', is_flag=True, default=False, help='Only show directories.')
+def byname(dir, name, json_, include_sys, only_dir):
     ''' Find files with names.'''
     _names = [str(x).lower() for x in name if len(x.strip()) > 0]
     if len(_names) == 0:
@@ -274,12 +275,16 @@ def byname(dir, name, json_, include_sys):
         nodes = utils.exclude_os_files(nodes)
 
     result = utils.filter_by_name(nodes, _names)
+
+    if only_dir:
+        result = utils.filter_dir(result)
+
+    temp = sorted(list(result))
     if not json_:
-        for each in result:
+        for each in temp:
             click.echo(each)
     else:
         with open(json_, 'w', encoding='utf8') as f:
-            temp = sorted(list(result))
             r = {'paths': [str(x) for x in temp]}
             json.dump(r, f, indent=2, ensure_ascii=False)
 

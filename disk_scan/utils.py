@@ -147,7 +147,7 @@ def filter_by_suffixes(nodes: Set[Path], include: List[str]=None, exclude: List[
 
 
 def filter_by_name(nodes: Set[Path], include: List[str]=None, exclude: List[str]=None) -> Set[Path]:
-    ''' Filter nodes, include some with partial name matching '''
+    ''' Filter nodes, include some with partial name matching, case insensitive '''
     _include = []
     if include:
         _include = [str(x).lower() for x in include]
@@ -159,7 +159,7 @@ def filter_by_name(nodes: Set[Path], include: List[str]=None, exclude: List[str]
     output = set()
     for x in nodes:
         should_add = False
-        _x = str(x.stem).lower()
+        _x = str(x.name).lower()
         for each in _include:
             if each in _x:
                 should_add = True
@@ -286,6 +286,8 @@ def has_str(p: Path, old: str) -> bool:
 def stem_has_str(p: Path, old: str) -> bool:
     return old in p.stem
 
+def name_has_str(p: Path, old: str) -> bool:
+    return old in p.name
 
 def rename_stem(p: Path, old: str, new: str, dry_run=True) -> Tuple[str, str]:
     if not stem_has_str(p, old):
@@ -298,6 +300,17 @@ def rename_stem(p: Path, old: str, new: str, dry_run=True) -> Tuple[str, str]:
     if not dry_run:
         p.rename(newPath)
     
+    return x, y
+
+def rename_name(p: Path, old: str, new: str, dry_run=True) -> Tuple[str, str]:
+    if not name_has_str(p, old):
+        return None, None
+    x = str(p)
+    newName = p.name.replace(old, new)
+    newPath = p.with_name(newName.strip('/'))
+    y = str(newPath)
+    if not dry_run:
+        p.rename(newPath)
     return x, y
 
 
