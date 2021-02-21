@@ -67,9 +67,9 @@ def duplicate(dir, json_, include_sys):
                 click.echo(str(x))
             click.echo('-' * 32)
     else:
-        with open(json_, 'w') as f:
+        with open(json_, 'w', encoding='utf8') as f:
             r = {md5_hash.hex(): [str(x) for x in paths] for md5_hash, paths in result.items()}
-            json.dump(r, f, indent=2)
+            json.dump(r, f, indent=2, ensure_ascii=False)
 
 
 @click.command()
